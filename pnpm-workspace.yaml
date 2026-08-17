@@ -27,6 +27,8 @@ catalog:
 catalogs:
   argon2:
     argon2: ^0.45.1
+  casl:
+    '@casl/ability': ^7.0.1
   faker-js:
     '@faker-js/faker': ^10.6.0
   tsx:

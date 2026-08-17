@@ -1,0 +1,21 @@
+{
+	"name": "@sass-boiler-plate/auth",
+	"type": "module",
+	"exports": {
+		".": {
+			"default": "./src/index.ts"
+		},
+		"./*": {
+			"default": "./src/*.ts"
+		}
+	},
+	"dependencies": {
+		"@casl/ability": "catalog:casl",
+		"@sass-boiler-plate/env": "workspace:*",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@sass-boiler-plate/config": "workspace:*",
+		"typescript": "catalog:"
+	}
+}
