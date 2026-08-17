@@ -1,0 +1,72 @@
+import ScalarApiReference from "@scalar/fastify-api-reference";
+
+import fastifyCors from "@fastify/cors";
+import fastifyJwt from "@fastify/jwt";
+import { type FastifyReply, type FastifyRequest, fastify } from "fastify";
+import {
+	type ZodTypeProvider,
+	serializerCompiler,
+	validatorCompiler,
+} from "fastify-type-provider-zod";
+
+import { env } from "@sass-boiler-plate/env/server";
+import { errorHandler } from "./handlers/error.handler.js";
+import { registerSwagger } from "./registry/swagger.registry.js";
+import { registerRoutes } from "./routes/register-routes.js";
+
+const app = fastify().withTypeProvider<ZodTypeProvider>();
+
+app.setSerializerCompiler(serializerCompiler);
+app.setValidatorCompiler(validatorCompiler);
+
+app.setErrorHandler(errorHandler);
+
+// Swagger API documentation
+registerSwagger(app);
+
+app.register(fastifyJwt, {
+	secret: env.JWT_SECRET,
+});
+
+app.register(fastifyCors);
+
+// routes
+registerRoutes(app);
+
+// Serve an OpenAPI file
+app.get("/openapi.json", async () => {
+	return app.swagger();
+});
+
+await app.register(ScalarApiReference, {
+	routePrefix: "/reference",
+	configuration: {
+		metaData: {
+			title: "Next SASS RBAC Boilerplate",
+		},
+	},
+	// Additional hooks for the API reference routes. You can provide the onRequest and preHandler hooks
+	hooks: {
+		onRequest: (
+			_request: FastifyRequest,
+			_reply: FastifyReply,
+			done: () => void,
+		) => {
+			done();
+		},
+		preHandler: (
+			_request: FastifyRequest,
+			_reply: FastifyReply,
+			done: () => void,
+		) => {
+			done();
+		},
+	},
+});
+
+// Wait for Fastify
+await app.ready();
+
+app.listen({ port: env.SERVER_PORT }).then(() => {
+	console.log(`Server running on http://localhost:${env.SERVER_PORT}`);
+});
