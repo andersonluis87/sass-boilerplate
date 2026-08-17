@@ -1,0 +1,16 @@
+model Projects {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  slug        String   @unique
+  avatarUrl   String?  @map("avatar_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  owner          User         @relation(fields: [ownerId], references: [id])
+  ownerId        String       @map("owner_id")
+  organizationId String       @map("organization_id")
+
+  @@map("projects")
+}

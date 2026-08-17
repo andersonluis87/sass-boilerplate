@@ -1,17 +1,16 @@
-name: sass-boiler-plate
-
+name: ${POSTGRES_VOLUME_NAME}
 services:
   postgres:
     image: postgres:18
-    container_name: sass-boiler-plate-postgres
+    container_name: ${POSTGRES_VOLUME_NAME}-postgres
     environment:
-      POSTGRES_DB: sass-boiler-plate
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes:
-      - sass-boiler-plate_postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -20,4 +19,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  sass-boiler-plate_postgres_data:
+  postgres_data:
+    name: ${POSTGRES_VOLUME_NAME}
