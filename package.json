@@ -1,38 +1,39 @@
 {
-  "name": "sass-boiler-plate",
-  "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "type": "module",
-  "scripts": {
-    "dev": "nx run-many -t dev",
-    "build": "nx run-many -t build",
-    "check-types": "nx run-many -t check-types",
-    "dev:web": "nx run-many -t dev --projects=web",
-    "dev:server": "nx run-many -t dev --projects=server",
-    "db:push": "nx run-many -t db:push --projects=@sass-boiler-plate/db",
-    "db:studio": "nx run-many -t db:studio --projects=@sass-boiler-plate/db",
-    "db:generate": "nx run-many -t db:generate --projects=@sass-boiler-plate/db",
-    "db:migrate": "nx run-many -t db:migrate --projects=@sass-boiler-plate/db",
-    "db:start": "nx run-many -t db:start --projects=@sass-boiler-plate/db",
-    "db:watch": "nx run-many -t db:watch --projects=@sass-boiler-plate/db",
-    "db:stop": "nx run-many -t db:stop --projects=@sass-boiler-plate/db",
-    "db:down": "nx run-many -t db:down --projects=@sass-boiler-plate/db",
-    "check": "biome check --write ."
-  },
-  "dependencies": {
-    "@sass-boiler-plate/env": "workspace:*",
-    "dotenv": "catalog:",
-    "zod": "catalog:"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.5.6",
-    "@sass-boiler-plate/config": "workspace:*",
-    "@types/node": "catalog:",
-    "nx": "^23.1.0",
-    "typescript": "catalog:"
-  },
-  "packageManager": "pnpm@11.22.0"
+	"name": "sass-boiler-plate",
+	"private": true,
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"type": "module",
+	"scripts": {
+		"dev": "nx run-many -t dev",
+		"build": "nx run-many -t build",
+		"check-types": "nx run-many -t check-types",
+		"dev:web": "nx run-many -t dev --projects=web",
+		"dev:server": "nx run-many -t dev --projects=server",
+		"db:push": "nx run-many -t db:push --projects=@sass-boiler-plate/db",
+		"db:studio": "nx run-many -t db:studio --projects=@sass-boiler-plate/db",
+		"db:generate": "nx run-many -t db:generate --projects=@sass-boiler-plate/db",
+		"db:migrate": "nx run-many -t db:migrate --projects=@sass-boiler-plate/db",
+		"db:start": "nx run-many -t db:start --projects=@sass-boiler-plate/db",
+		"db:watch": "nx run-many -t db:watch --projects=@sass-boiler-plate/db",
+		"db:stop": "nx run-many -t db:stop --projects=@sass-boiler-plate/db",
+		"db:down": "nx run-many -t db:down --projects=@sass-boiler-plate/db",
+		"db:seed": "nx run-many -t db:seed --projects=@sass-boiler-plate/db",
+		"check": "biome check --write ."
+	},
+	"dependencies": {
+		"@sass-boiler-plate/env": "workspace:*",
+		"dotenv": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.6",
+		"@sass-boiler-plate/config": "workspace:*",
+		"@types/node": "catalog:",
+		"nx": "^23.1.0",
+		"typescript": "catalog:"
+	},
+	"packageManager": "pnpm@11.22.0"
 }
