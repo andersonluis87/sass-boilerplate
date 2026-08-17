@@ -1,0 +1,26 @@
+{
+  "name": "@sass-boiler-plate/api",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@prisma/client": "catalog:",
+    "@sass-boiler-plate/db": "workspace:*",
+    "@sass-boiler-plate/env": "workspace:*",
+    "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@sass-boiler-plate/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

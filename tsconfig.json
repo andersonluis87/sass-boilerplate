@@ -1,0 +1,3 @@
+{
+  "extends": "@sass-boiler-plate/config/tsconfig.base.json"
+}
