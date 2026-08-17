@@ -1,8 +1,3 @@
-import ScalarApiReference from "@scalar/fastify-api-reference";
-
-import fastifyCors from "@fastify/cors";
-import fastifyJwt from "@fastify/jwt";
-import { type FastifyReply, type FastifyRequest, fastify } from "fastify";
 import {
 	type ZodTypeProvider,
 	serializerCompiler,
@@ -10,25 +5,28 @@ import {
 } from "fastify-type-provider-zod";
 
 import { env } from "@sass-boiler-plate/env/server";
+import Fastify from "fastify";
 import { errorHandler } from "./handlers/error.handler.js";
+import { registerCors } from "./registry/cors.registry.js";
+import { registerJwt } from "./registry/jwt.registry.js";
+import { registerScalar } from "./registry/scalar.registry.js";
 import { registerSwagger } from "./registry/swagger.registry.js";
+import { registerTrpc } from "./registry/trpc.registry.js";
 import { registerRoutes } from "./routes/register-routes.js";
 
-const app = fastify().withTypeProvider<ZodTypeProvider>();
+const app = Fastify({
+	logger: true,
+}).withTypeProvider<ZodTypeProvider>();
 
 app.setSerializerCompiler(serializerCompiler);
 app.setValidatorCompiler(validatorCompiler);
-
 app.setErrorHandler(errorHandler);
 
-// Swagger API documentation
+// app configs
 registerSwagger(app);
-
-app.register(fastifyJwt, {
-	secret: env.JWT_SECRET,
-});
-
-app.register(fastifyCors);
+registerJwt(app);
+registerCors(app);
+registerTrpc(app);
 
 // routes
 registerRoutes(app);
@@ -38,35 +36,16 @@ app.get("/openapi.json", async () => {
 	return app.swagger();
 });
 
-await app.register(ScalarApiReference, {
-	routePrefix: "/reference",
-	configuration: {
-		metaData: {
-			title: "Next SASS RBAC Boilerplate",
-		},
-	},
-	// Additional hooks for the API reference routes. You can provide the onRequest and preHandler hooks
-	hooks: {
-		onRequest: (
-			_request: FastifyRequest,
-			_reply: FastifyReply,
-			done: () => void,
-		) => {
-			done();
-		},
-		preHandler: (
-			_request: FastifyRequest,
-			_reply: FastifyReply,
-			done: () => void,
-		) => {
-			done();
-		},
-	},
-});
+// Scalar API reference
+await registerScalar(app);
 
-// Wait for Fastify
+// Wait for Fastify to be ready
 await app.ready();
 
-app.listen({ port: env.SERVER_PORT }).then(() => {
-	console.log(`Server running on http://localhost:${env.SERVER_PORT}`);
+app.listen({ port: env.SERVER_PORT }, (err) => {
+	if (err) {
+		app.log.error(err);
+		process.exit(1);
+	}
+	console.log(`🚀 Server running on port ${env.SERVER_PORT}...`);
 });

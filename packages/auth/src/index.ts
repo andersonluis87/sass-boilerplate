@@ -17,7 +17,7 @@ import { UserSubject } from "./subjects/user.subject";
 export { OrganizationSchema } from "./models/organization.model";
 export { ProjectSchema } from "./models/project.model";
 export { UserSchema } from "./models/user.model";
-export { RoleSchema } from "./schemas/role.schema";
+export { Role } from "./schemas/role.schema";
 
 const appAbilitiesSchema = z.union([
 	UserSubject,
@@ -28,10 +28,9 @@ const appAbilitiesSchema = z.union([
 
 	z.tuple([z.literal("manage"), z.literal("all")]),
 ]);
-
 type AppAbilities = z.infer<typeof appAbilitiesSchema>;
-
 export type AppAbility = MongoAbility<AppAbilities>;
+
 export const createAppAbility = createMongoAbility as CreateAbility<AppAbility>;
 
 export function defineAbilityFor(user: UserSchema) {

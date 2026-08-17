@@ -10,7 +10,7 @@
 		}
 	},
 	"dependencies": {
-		"@casl/ability": "catalog:casl",
+		"@casl/ability": "catalog:",
 		"@sass-boiler-plate/env": "workspace:*",
 		"zod": "catalog:"
 	},

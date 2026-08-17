@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-import { RoleSchema } from "../schemas/role.schema";
+import { Role } from "../schemas/role.schema";
 
 export const UserSchema = z.object({
 	id: z.uuid(),
-	role: RoleSchema,
+	role: Role,
 });
 
 export type UserSchema = z.infer<typeof UserSchema>;

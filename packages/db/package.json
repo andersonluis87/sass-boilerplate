@@ -26,17 +26,17 @@
 		"@prisma/adapter-pg": "^7.9.1",
 		"@prisma/client": "catalog:",
 		"@sass-boiler-plate/env": "workspace:*",
-		"argon2": "catalog:argon2",
+		"argon2": "catalog:",
 		"dotenv": "catalog:",
 		"pg": "^8.22.0",
 		"zod": "catalog:"
 	},
 	"devDependencies": {
-		"@faker-js/faker": "catalog:faker-js",
+		"@faker-js/faker": "catalog:",
 		"@sass-boiler-plate/config": "workspace:*",
 		"@types/pg": "^8.20.0",
 		"prisma": "^7.9.1",
-		"tsx": "catalog:tsx",
+		"tsx": "catalog:",
 		"typescript": "catalog:"
 	}
 }
