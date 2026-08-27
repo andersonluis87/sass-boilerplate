@@ -1,14 +1,13 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 
 import { getUserPermissions } from "@/shared/get-user-permissions.js";
 import { ProjectSchema } from "@sass-boiler-plate/auth";
 import prisma from "@sass-boiler-plate/db";
-import { BadRequestError } from "../_errors/bad-request-error.js";
-import { protectedRoute } from "../fastify-zod-route-provider.js";
+import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
 
-export async function deleteProject(app: FastifyInstance) {
-	protectedRoute(app).delete(
+async function deleteProject(app: FastifyInstance) {
+	app.delete(
 		"/organizations/:slug/projects/:id",
 		{
 			schema: {
@@ -25,7 +24,12 @@ export async function deleteProject(app: FastifyInstance) {
 			},
 		},
 		// controller
-		async (request, reply) => {
+		async (
+			request: FastifyRequest<{
+				Params: { slug: string; id: string };
+			}>,
+			reply: FastifyReply,
+		) => {
 			const { slug, id } = request.params;
 			const { organization, membership } =
 				await request.getUserMembership(slug);
@@ -41,7 +45,7 @@ export async function deleteProject(app: FastifyInstance) {
 				throw new BadRequestError("Project not found");
 			}
 
-			const userId = await request.getCurrentUserId();
+			const userId = request.currentUserId;
 			const { cannot } = getUserPermissions(userId, membership.role);
 			const authProject = ProjectSchema.parse(project);
 
@@ -59,3 +63,5 @@ export async function deleteProject(app: FastifyInstance) {
 		},
 	);
 }
+
+export default deleteProject;

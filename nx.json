@@ -42,6 +42,10 @@
       "cache": false,
       "continuous": true
     },
+    "dev:debug": {
+      "cache": false,
+      "continuous": true
+    },
     "db:push": {
       "cache": false
     },

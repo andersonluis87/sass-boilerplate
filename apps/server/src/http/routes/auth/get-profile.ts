@@ -1,13 +1,12 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import z from "zod";
 
 import prisma from "@sass-boiler-plate/db";
 
-import { BadRequestError } from "../_errors/bad-request-error.js";
-import { protectedRoute } from "../fastify-zod-route-provider.js";
+import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
 
-export async function getProfile(app: FastifyInstance) {
-	protectedRoute(app).get(
+async function getProfile(app: FastifyInstance) {
+	app.get(
 		"/profile",
 		{
 			schema: {
@@ -33,8 +32,11 @@ export async function getProfile(app: FastifyInstance) {
 				},
 			},
 		},
-		async (request, reply) => {
-			const userId = await request.getCurrentUserId();
+		async (
+			request: FastifyRequest<{ Body: { email: string; password: string } }>,
+			reply: FastifyReply,
+		) => {
+			const userId = request.currentUserId;
 
 			const user = await prisma.user.findUnique({
 				select: {
@@ -56,3 +58,5 @@ export async function getProfile(app: FastifyInstance) {
 		},
 	);
 }
+
+export default getProfile;

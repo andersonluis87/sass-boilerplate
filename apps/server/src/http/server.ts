@@ -1,51 +1,34 @@
-import {
-	type ZodTypeProvider,
-	serializerCompiler,
-	validatorCompiler,
-} from "fastify-type-provider-zod";
-
 import { env } from "@sass-boiler-plate/env/server";
 import Fastify from "fastify";
-import { errorHandler } from "./handlers/error.handler.js";
-import { registerCors } from "./registry/cors.registry.js";
-import { registerJwt } from "./registry/jwt.registry.js";
-import { registerScalar } from "./registry/scalar.registry.js";
-import { registerSwagger } from "./registry/swagger.registry.js";
-import { registerTrpc } from "./registry/trpc.registry.js";
-import { registerRoutes } from "./routes/register-routes.js";
+import type { ZodTypeProvider } from "fastify-type-provider-zod";
+import application from "./app";
 
 const app = Fastify({
 	logger: true,
+	// Apply recommended timeouts to prevent slow or idle clients from holding connections open
+	connectionTimeout: 120_000,
+	requestTimeout: 60_000,
+	keepAliveTimeout: 10_000,
+	http: {
+		headersTimeout: 15_000,
+	},
 }).withTypeProvider<ZodTypeProvider>();
 
-app.setSerializerCompiler(serializerCompiler);
-app.setValidatorCompiler(validatorCompiler);
-app.setErrorHandler(errorHandler);
+async function init() {
+	await app.register(application);
 
-// app configs
-registerSwagger(app);
-registerJwt(app);
-registerCors(app);
-registerTrpc(app);
+	//TODO: add close with graceful shutdown
+	//gracefulShutdown(app)
 
-// routes
-registerRoutes(app);
+	await app.ready();
 
-// Serve an OpenAPI file
-app.get("/openapi.json", async () => {
-	return app.swagger();
-});
+	app.listen({ port: env.SERVER_PORT }, (err) => {
+		if (err) {
+			app.log.error(err);
+			process.exit(1);
+		}
+		console.log(`🚀 Server running on port ${env.SERVER_PORT}...`);
+	});
+}
 
-// Scalar API reference
-await registerScalar(app);
-
-// Wait for Fastify to be ready
-await app.ready();
-
-app.listen({ port: env.SERVER_PORT }, (err) => {
-	if (err) {
-		app.log.error(err);
-		process.exit(1);
-	}
-	console.log(`🚀 Server running on port ${env.SERVER_PORT}...`);
-});
+init();

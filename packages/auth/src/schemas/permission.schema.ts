@@ -1,5 +1,4 @@
 import type { AbilityBuilder } from "@casl/ability";
-
 import type { AppAbility } from "..";
 import type { UserSchema } from "../models/user.model";
 import type { Role } from "./role.schema";

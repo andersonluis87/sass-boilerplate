@@ -1,8 +1,7 @@
+import { BadRequestError } from "@/shared/_errors/bad-request-error";
+import { UnauthorizedError } from "@/shared/_errors/unauthorized-error";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { ZodError } from "zod";
-
-import { BadRequestError } from "../routes/_errors/bad-request-error.js";
-import { UnauthorizedError } from "../routes/_errors/unauthorized-error.js";
 
 type FastifyErrorHandler = FastifyInstance["errorHandler"];
 

@@ -1,13 +1,12 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import z from "zod";
 
 import prisma from "@sass-boiler-plate/db";
 import argon2 from "argon2";
-import { BadRequestError } from "../_errors/bad-request-error.js";
-import { route } from "../fastify-zod-route-provider.js";
+import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
 
-export async function authenticateWithPassword(app: FastifyInstance) {
-	route(app).post(
+async function authenticateWithPassword(app: FastifyInstance) {
+	app.post(
 		"/sessions/password",
 		{
 			schema: {
@@ -24,7 +23,10 @@ export async function authenticateWithPassword(app: FastifyInstance) {
 				},
 			},
 		},
-		async (request, reply) => {
+		async (
+			request: FastifyRequest<{ Body: { email: string; password: string } }>,
+			reply: FastifyReply,
+		) => {
 			const { email, password } = request.body;
 
 			const user = await prisma.user.findUnique({
@@ -66,3 +68,5 @@ export async function authenticateWithPassword(app: FastifyInstance) {
 		},
 	);
 }
+
+export default authenticateWithPassword;

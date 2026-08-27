@@ -1,14 +1,13 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import z from "zod";
 import argon2 from "argon2";
 
 import prisma from "@sass-boiler-plate/db";
 
-import { UnauthorizedError } from "../_errors/unauthorized-error.js";
-import { route } from "../fastify-zod-route-provider.js";
+import { UnauthorizedError } from "@/shared/_errors/unauthorized-error.js";
 
-export async function resetPassword(app: FastifyInstance) {
-	route(app).post(
+async function resetPassword(app: FastifyInstance) {
+	app.post(
 		"/password/reset",
 		{
 			schema: {
@@ -23,7 +22,10 @@ export async function resetPassword(app: FastifyInstance) {
 				},
 			},
 		},
-		async (request, reply) => {
+		async (
+			request: FastifyRequest<{ Body: { code: string; password: string } }>,
+			reply: FastifyReply,
+		) => {
 			const { code, password } = request.body;
 
 			const tokenFromCode = await prisma.token.findUnique({
@@ -53,3 +55,5 @@ export async function resetPassword(app: FastifyInstance) {
 		},
 	);
 }
+
+export default resetPassword;

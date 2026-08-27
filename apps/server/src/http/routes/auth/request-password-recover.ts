@@ -1,12 +1,10 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import z from "zod";
 
 import prisma from "@sass-boiler-plate/db";
 
-import { route } from "../fastify-zod-route-provider.js";
-
-export async function requestPasswordRecover(app: FastifyInstance) {
-	route(app).post(
+async function requestPasswordRecover(app: FastifyInstance) {
+	app.post(
 		"/password/recover",
 		{
 			schema: {
@@ -20,7 +18,10 @@ export async function requestPasswordRecover(app: FastifyInstance) {
 				},
 			},
 		},
-		async (request, reply) => {
+		async (
+			request: FastifyRequest<{ Body: { email: string } }>,
+			reply: FastifyReply,
+		) => {
 			const { email } = request.body;
 
 			const user = await prisma.user.findUnique({
@@ -47,3 +48,5 @@ export async function requestPasswordRecover(app: FastifyInstance) {
 		},
 	);
 }
+
+export default requestPasswordRecover;

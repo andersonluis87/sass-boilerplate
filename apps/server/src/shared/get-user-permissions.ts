@@ -8,6 +8,5 @@ export function getUserPermissions(id: string, role: Role) {
 	});
 
 	const ability = defineAbilityFor(authUser);
-
 	return ability;
 }

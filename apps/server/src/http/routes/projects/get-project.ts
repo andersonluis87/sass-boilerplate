@@ -1,14 +1,13 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 
 import { getUserPermissions } from "@/shared/get-user-permissions.js";
 import prisma from "@sass-boiler-plate/db";
 
-import { BadRequestError } from "../_errors/bad-request-error.js";
-import { protectedRoute } from "../fastify-zod-route-provider.js";
+import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
 
-export async function getProject(app: FastifyInstance) {
-	protectedRoute(app).get(
+async function getProject(app: FastifyInstance) {
+	app.get(
 		"/organizations/:organizationSlug/projects/:projectSlug",
 		{
 			schema: {
@@ -38,12 +37,17 @@ export async function getProject(app: FastifyInstance) {
 			},
 		},
 		// controller
-		async (request, reply) => {
+		async (
+			request: FastifyRequest<{
+				Params: { organizationSlug: string; projectSlug: string };
+			}>,
+			reply: FastifyReply,
+		) => {
 			const { organizationSlug, projectSlug } = request.params;
 			const { organization, membership } =
 				await request.getUserMembership(organizationSlug);
 
-			const userId = await request.getCurrentUserId();
+			const userId = request.currentUserId;
 			const { cannot } = getUserPermissions(userId, membership.role);
 
 			if (cannot("get", "Project")) {
@@ -80,3 +84,5 @@ export async function getProject(app: FastifyInstance) {
 		},
 	);
 }
+
+export default getProject;

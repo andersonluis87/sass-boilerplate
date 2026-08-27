@@ -3,6 +3,14 @@ import { env } from "@sass-boiler-plate/env/server";
 
 import { PrismaClient } from "../prisma/generated/client";
 
+export type {
+	Member,
+	Organization,
+	Projects,
+	Role,
+	User,
+} from "../prisma/generated/client";
+
 export function createPrismaClient() {
 	const adapter = new PrismaPg({
 		connectionString: env.DATABASE_URL,

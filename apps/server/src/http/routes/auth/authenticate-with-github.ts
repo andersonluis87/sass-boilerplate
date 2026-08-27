@@ -1,15 +1,13 @@
-import z from "zod";
+import prisma from "@sass-boiler-plate/db";
 
 import { env } from "@sass-boiler-plate/env/server";
-import type { FastifyInstance } from "fastify";
-
-import prisma from "@sass-boiler-plate/db";
-import { BadRequestError } from "../_errors/bad-request-error.js";
-import { route } from "../fastify-zod-route-provider.js";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import z from "zod";
+import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
 
 // https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps
-export async function authenticateWithGithub(app: FastifyInstance) {
-	route(app).post(
+async function authenticateWithGithub(app: FastifyInstance) {
+	app.post(
 		"/sessions/github",
 		{
 			schema: {
@@ -25,7 +23,10 @@ export async function authenticateWithGithub(app: FastifyInstance) {
 				},
 			},
 		},
-		async (request, reply) => {
+		async (
+			request: FastifyRequest<{ Body: { code: string } }>,
+			reply: FastifyReply,
+		) => {
 			const { code } = request.body;
 
 			// https://github.com/login/oauth/authorize?client_id={GITHUB_CLIENT_ID}&client_secret={GITHUB_CLIENT_SECRE}&redirect_uri={GITHUB_REDIRECT_URI}&scope=user:email
@@ -76,9 +77,9 @@ export async function authenticateWithGithub(app: FastifyInstance) {
 			} = z
 				.object({
 					id: z.number().int().transform(String),
-					avatar_url: z.string().url(),
+					avatar_url: z.url(),
 					name: z.string().optional(),
-					email: z.string().email().nullable(),
+					email: z.email().nullable(),
 				})
 				.parse(githubUserData);
 
@@ -140,3 +141,5 @@ export async function authenticateWithGithub(app: FastifyInstance) {
 		},
 	);
 }
+
+export default authenticateWithGithub;

@@ -1,13 +1,14 @@
 import "fastify";
 
-import type { Member, Organization } from "@prisma/client";
+import type { RouteCan } from "@packages/auth";
 
 declare module "fastify" {
-	interface FastifyRequest {
-		getCurrentUserId: () => Promise<string>;
-		getUserMembership: (slug: string) => Promise<{
-			organization: Organization;
-			membership: Member;
-		}>;
+	interface FastifyContextConfig {
+		authenticate?: boolean;
+		can?: RouteCan;
+	}
+
+	interface FastifyInstance {
+		createSlug: (name: string) => string;
 	}
 }

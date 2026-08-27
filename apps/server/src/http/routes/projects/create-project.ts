@@ -1,15 +1,13 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 
 import { getUserPermissions } from "@/shared/get-user-permissions.js";
-import { createSlug } from "@/utils/create-slug.util.js";
 import prisma from "@sass-boiler-plate/db";
 
-import { BadRequestError } from "../_errors/bad-request-error.js";
-import { protectedRoute } from "../fastify-zod-route-provider.js";
+import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
 
-export async function createProject(app: FastifyInstance) {
-	protectedRoute(app).post(
+async function createProject(app: FastifyInstance) {
+	app.post(
 		"/organizations/:slug/projects",
 		{
 			schema: {
@@ -32,12 +30,18 @@ export async function createProject(app: FastifyInstance) {
 			},
 		},
 		// controller
-		async (request, reply) => {
+		async (
+			request: FastifyRequest<{
+				Params: { slug: string };
+				Body: { name: string; description: string; avatarUrl: string };
+			}>,
+			reply: FastifyReply,
+		) => {
 			const { slug } = request.params;
 			const { organization, membership } =
 				await request.getUserMembership(slug);
 
-			const userId = await request.getCurrentUserId();
+			const userId = request.currentUserId;
 			const { cannot } = getUserPermissions(userId, membership.role);
 
 			if (cannot("create", "Project")) {
@@ -46,7 +50,7 @@ export async function createProject(app: FastifyInstance) {
 
 			const { name, description, avatarUrl } = request.body;
 
-			const projectSlug = createSlug(name);
+			const projectSlug = request.createSlug(name);
 
 			// service
 			const project = await prisma.projects.create({
@@ -64,3 +68,5 @@ export async function createProject(app: FastifyInstance) {
 		},
 	);
 }
+
+export default createProject;

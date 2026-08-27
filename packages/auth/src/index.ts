@@ -28,10 +28,11 @@ const appAbilitiesSchema = z.union([
 
 	z.tuple([z.literal("manage"), z.literal("all")]),
 ]);
+
 type AppAbilities = z.infer<typeof appAbilitiesSchema>;
 export type AppAbility = MongoAbility<AppAbilities>;
 
-export const createAppAbility = createMongoAbility as CreateAbility<AppAbility>;
+const createAppAbility = createMongoAbility as CreateAbility<AppAbility>;
 
 export function defineAbilityFor(user: UserSchema) {
 	const builder = new AbilityBuilder(createAppAbility);
@@ -53,3 +54,15 @@ export function defineAbilityFor(user: UserSchema) {
 
 	return ability;
 }
+
+type SubjectName<S> = S extends string
+	? S
+	: S extends { __typename: infer N }
+		? N
+		: never;
+
+export type RouteCan = AppAbilities extends infer U
+	? U extends readonly [infer Action, infer Subject]
+		? readonly [Action, SubjectName<Subject>]
+		: never
+	: never;

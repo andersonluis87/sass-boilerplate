@@ -1,14 +1,13 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 
 import prisma from "@sass-boiler-plate/db";
 import argon2 from "argon2";
 
-import { BadRequestError } from "../_errors/bad-request-error.js";
-import { route } from "../fastify-zod-route-provider.js";
+import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
 
-export async function createAccount(app: FastifyInstance) {
-	route(app).post(
+async function createAccount(app: FastifyInstance) {
+	app.post(
 		"/users",
 		{
 			schema: {
@@ -21,7 +20,12 @@ export async function createAccount(app: FastifyInstance) {
 				}),
 			},
 		},
-		async (request, reply) => {
+		async (
+			request: FastifyRequest<{
+				Body: { name: string; email: string; password: string };
+			}>,
+			reply: FastifyReply,
+		) => {
 			const { email, name, password } = request.body;
 
 			const userAlredyExists = await prisma.user.findUnique({
@@ -63,3 +67,5 @@ export async function createAccount(app: FastifyInstance) {
 		},
 	);
 }
+
+export default createAccount;
