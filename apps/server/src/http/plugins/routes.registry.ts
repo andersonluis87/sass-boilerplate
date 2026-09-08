@@ -9,6 +9,10 @@ export const routesRegistry = fp(
 			dir: path.resolve(import.meta.dirname, "../routes"),
 			autoHooks: true,
 			cascadeHooks: true,
+			// TODO: enable this when we have migrate the
+			// rest of the routes to the new pattern
+			// only load files that end with .routes.ts or .routes.js
+			// matchFilter: /\.routes\.(ts|js)$/,
 			// disable the automatic prefixing of the directory name to the route
 			dirNameRoutePrefix: false,
 			options: { ...options },

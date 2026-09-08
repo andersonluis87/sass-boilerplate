@@ -26,8 +26,11 @@ async function createProject(app: FastifyInstance) {
 					}),
 				},
 			},
+			config: {
+				authenticate: true,
+				can: ["create", "Project"],
+			},
 		},
-		// controller
 		async (
 			request: FastifyRequest<{
 				Params: { slug: string };
@@ -35,19 +38,6 @@ async function createProject(app: FastifyInstance) {
 			}>,
 			reply: FastifyReply,
 		) => {
-			/*
-			const { slug } = request.params;
-			const { organization, membership } =
-				await request.getCurrentUserMembership(slug);
-
-			const userId = request.currentUserId;
-			const { cannot } = checkAbilityFor(userId, membership.role);
-
-			if (cannot("create", "Project")) {
-				throw new BadRequestError("You are not allowed to create a project");
-			}
-			*/
-
 			const { organization, currentUserId: userId } = request;
 			if (!organization) {
 				throw new NotFoundError("Organization not found");
@@ -57,8 +47,7 @@ async function createProject(app: FastifyInstance) {
 
 			const projectSlug = createSlug(name);
 
-			// service
-			const project = await prisma.projects.create({
+			const project = await prisma.project.create({
 				data: {
 					name,
 					slug: projectSlug,

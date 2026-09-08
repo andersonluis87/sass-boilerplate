@@ -1,4 +1,4 @@
-model Projects {
+model Project {
   id          String   @id @default(uuid())
   name        String
   description String?

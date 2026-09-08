@@ -1,8 +1,11 @@
 import prisma from "@sass-boiler-plate/db";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
 import { NotFoundError } from "@/shared/_errors/not-found-error";
+import {
+	assertWriteAllowed,
+	constrainWhere,
+} from "@/utils/accessible-where.util";
 
 async function updateProject(app: FastifyInstance) {
 	app.patch(
@@ -28,8 +31,11 @@ async function updateProject(app: FastifyInstance) {
 					204: z.null(),
 				},
 			},
+			config: {
+				authenticate: true,
+				can: ["update", "Project"],
+			},
 		},
-		// controller
 		async (
 			request: FastifyRequest<{
 				Params: { slug: string; id: string };
@@ -43,36 +49,18 @@ async function updateProject(app: FastifyInstance) {
 				throw new NotFoundError("Organization not found");
 			}
 
-			const project = await prisma.projects.findUnique({
-				where: {
-					id,
-					organizationId: organization.id,
-				},
-			});
-
-			if (!project) {
-				throw new BadRequestError("Project not found");
-			}
-
-			/*const userId = request.currentUserId;
-			const { cannot } = checkAbilityFor(userId, membership.role);
-			const authProject = ProjectSchema.parse(project);
-
-			if (cannot("update", authProject)) {
-				throw new BadRequestError("You are not allowed to update this project");
-			}
-			*/
 			const { name, description } = request.body;
+			const where = constrainWhere(request, "update", "Project", { id });
 
-			await prisma.projects.update({
+			const updated = await prisma.project.updateMany({
 				data: {
 					name,
 					description,
 				},
-				where: {
-					id,
-				},
+				where,
 			});
+
+			assertWriteAllowed(updated.count);
 
 			reply.status(204).send(null);
 		},

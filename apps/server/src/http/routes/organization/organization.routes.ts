@@ -23,6 +23,7 @@ const organizationRoutes = (app: FastifyZodInstance) => {
 			schema: GetOrganizationRouteSchema,
 			config: {
 				authenticate: true,
+				can: ["get", "Organization"],
 			},
 			handler: controller.get.bind(controller),
 		})
@@ -30,6 +31,7 @@ const organizationRoutes = (app: FastifyZodInstance) => {
 			schema: GetMembershipRouteSchema,
 			config: {
 				authenticate: true,
+				can: ["get", "Organization"],
 			},
 			handler: controller.getMembership.bind(controller),
 		})

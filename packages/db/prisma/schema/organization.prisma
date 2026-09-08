@@ -13,7 +13,7 @@ model Organization {
 
   invites  Invite[]
   members  Member[]
-  projects Projects[]
+  projects Project[]
 
   @@map("organizations")
 }

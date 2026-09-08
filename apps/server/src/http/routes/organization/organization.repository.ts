@@ -1,7 +1,4 @@
-import prisma, {
-	type OrganizationUncheckedUpdateInput,
-	type OrganizationWhereInput,
-} from "@sass-boiler-plate/db";
+import prisma, { type Prisma } from "@sass-boiler-plate/db";
 import type { CreateOrganization } from "@/shared/schema/organization.schema";
 
 export class OrganizationRepository {
@@ -48,37 +45,29 @@ export class OrganizationRepository {
 		return id;
 	}
 
-	async update(id: string, data: OrganizationUncheckedUpdateInput) {
-		return prisma.organization.update({
-			where: {
-				id,
-			},
+	async update(
+		where: Prisma.OrganizationWhereInput,
+		data: Prisma.OrganizationUncheckedUpdateInput,
+	) {
+		return prisma.organization.updateMany({
+			where,
 			data,
 		});
 	}
 
-	async delete(id: string, userId: string) {
-		const deleted = await prisma.organization.delete({
-			where: {
-				id,
-				members: {
-					some: {
-						userId,
-					},
-				},
-			},
+	async delete(where: Prisma.OrganizationWhereInput) {
+		return prisma.organization.deleteMany({
+			where,
 		});
-
-		return deleted;
 	}
 
-	async findFirst(where: OrganizationWhereInput) {
+	async findFirst(where: Prisma.OrganizationWhereInput) {
 		return prisma.organization.findFirst({
 			where,
 		});
 	}
 
-	async exists(where: OrganizationWhereInput) {
+	async exists(where: Prisma.OrganizationWhereInput) {
 		const count = await prisma.organization.count({
 			where,
 		});
@@ -86,28 +75,36 @@ export class OrganizationRepository {
 		return count > 0;
 	}
 
-	async transferOwnership(id: string, userId: string) {
-		await prisma.$transaction(async (tx) => [
+	async transferOwnership(
+		where: Prisma.OrganizationWhereInput,
+		organizationId: string,
+		userId: string,
+	) {
+		return prisma.$transaction(async (tx) => {
+			const organization = await tx.organization.updateMany({
+				where,
+				data: {
+					ownerId: userId,
+				},
+			});
+
+			if (organization.count === 0) {
+				return organization;
+			}
+
 			await tx.member.update({
 				where: {
 					organizationId_userId: {
-						organizationId: id,
+						organizationId,
 						userId,
 					},
 				},
 				data: {
 					role: "MEMBER",
 				},
-			}),
+			});
 
-			await tx.organization.update({
-				where: {
-					id,
-				},
-				data: {
-					ownerId: userId,
-				},
-			}),
-		]);
+			return organization;
+		});
 	}
 }

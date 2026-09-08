@@ -2,6 +2,10 @@ import { Role } from "@sass-boiler-plate/auth";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { NotFoundError } from "@/shared/_errors/not-found-error";
+import {
+	assertWriteAllowed,
+	constrainWhere,
+} from "@/utils/accessible-where.util";
 
 async function updateMember(app: FastifyInstance) {
 	const { memberRepository } = app;
@@ -24,8 +28,11 @@ async function updateMember(app: FastifyInstance) {
 					204: z.null(),
 				},
 			},
+			config: {
+				authenticate: true,
+				can: ["update", "Member"],
+			},
 		},
-		// controller
 		async (
 			request: FastifyRequest<{
 				Params: { slug: string; memberId: string };
@@ -40,23 +47,12 @@ async function updateMember(app: FastifyInstance) {
 				throw new NotFoundError("Organization not found");
 			}
 
-			/*
-			const { organization, membership } =
-				await request.getCurrentUserMembership(slug);
-
-			const userId = request.currentUserId;
-			const { cannot } = checkAbilityFor(userId, membership.role);
-
-			if (cannot("update", "User")) {
-				throw new UnauthorizedError("You are not allowed update members");
-			}
-
-			*/
 			const { role } = request.body;
-			await memberRepository.update(memberId, {
-				role,
-				organizationId: organization.id,
+			const where = constrainWhere(request, "update", "Member", {
+				id: memberId,
 			});
+			const updated = await memberRepository.update(where, { role });
+			assertWriteAllowed(updated.count);
 
 			reply.status(204).send(null);
 		},

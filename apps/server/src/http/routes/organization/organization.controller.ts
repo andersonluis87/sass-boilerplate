@@ -1,4 +1,4 @@
-import type { OrganizationWhereInput } from "@sass-boiler-plate/db";
+import type { Prisma } from "@sass-boiler-plate/db";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { BadRequestError } from "@/shared/_errors/bad-request-error";
 import { NotFoundError } from "@/shared/_errors/not-found-error";
@@ -8,6 +8,10 @@ import type {
 	UpdateOrganization,
 } from "@/shared/schema/organization.schema";
 import type { SlugSchema } from "@/shared/schema/slug.schema";
+import {
+	assertWriteAllowed,
+	constrainWhere,
+} from "@/utils/accessible-where.util";
 import { createSlug } from "@/utils/create-slug.util";
 import { organizationWithRoleMapper } from "./mappers/organization-with-role.mapper";
 import type { OrganizationRepository } from "./organization.repository";
@@ -19,20 +23,15 @@ export class OrganizationController {
 		this.repository = app.organizationRepository;
 	}
 
-	// TODO: Paginate this route
 	async list(request: FastifyRequest) {
 		const organizations = await this.repository.list(request.currentUserId);
 		return { organizations: organizationWithRoleMapper(organizations) };
 	}
 
-	// This method is just for convenience.
-	// The organization is hydrated in the authentication plugin
 	async get(request: FastifyRequest) {
 		return { organization: request.organization };
 	}
 
-	// This method is just for convenience.
-	// The membership is hydrated in the authentication plugin
 	async getMembership(request: FastifyRequest) {
 		return {
 			membership: {
@@ -70,16 +69,9 @@ export class OrganizationController {
 		request: FastifyRequest<{ Params: SlugSchema }>,
 		reply: FastifyReply,
 	) {
-		const { currentUserId: userId, organization } = request;
-
-		// TODO: add accesibleBy to constrain query...
-		// TODO: Remove members from organization before shutting it down
-		const deleted = await this.repository.delete(organization.id, userId);
-		if (!deleted) {
-			throw new BadRequestError(
-				"You are not allowed to shutdown this organization",
-			);
-		}
+		const where = constrainWhere(request, "delete", "Organization");
+		const deleted = await this.repository.delete(where);
+		assertWriteAllowed(deleted.count);
 
 		return reply.status(204).send(null);
 	}
@@ -111,7 +103,12 @@ export class OrganizationController {
 			);
 		}
 
-		await this.repository.transferOwnership(organization.id, transferToUserId);
+		const transferred = await this.repository.transferOwnership(
+			constrainWhere(request, "transfer_ownership", "Organization"),
+			organization.id,
+			transferToUserId,
+		);
+		assertWriteAllowed(transferred.count);
 
 		return reply.status(204).send(null);
 	}
@@ -127,7 +124,6 @@ export class OrganizationController {
 		const { name, domain, shouldAttachUsersByDomain } = request.body;
 		const organization = request.organization;
 
-		// TODO: Improve the way we are returning the organization
 		if (!organization) {
 			throw new NotFoundError("Organization not found");
 		}
@@ -147,17 +143,21 @@ export class OrganizationController {
 			}
 		}
 
-		await this.repository.update(organization.id, {
-			name,
-			domain,
-			shouldAttachUsersByDomain,
-		});
+		const updated = await this.repository.update(
+			constrainWhere(request, "update", "Organization"),
+			{
+				name,
+				domain,
+				shouldAttachUsersByDomain,
+			},
+		);
+		assertWriteAllowed(updated.count);
 
 		return reply.status(204).send(null);
 	}
 
 	private async ensureOrganizationUnique(slug: string, domain?: string) {
-		const filters: OrganizationWhereInput[] = [{ slug }];
+		const filters: Prisma.OrganizationWhereInput[] = [{ slug }];
 
 		if (domain) {
 			filters.push({ domain });

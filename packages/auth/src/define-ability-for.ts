@@ -1,10 +1,10 @@
 import { AbilityBuilder, type CreateAbility } from "@casl/ability";
-import { createPrismaAbility, type PrismaAbility } from "@casl/prisma";
+import type { AppAbility } from "./casl-prisma";
+import { createPrismaAbility } from "./casl-prisma";
 import type { UserSchema } from "./models/user.model";
-import type { AppAbilities } from "./schemas/abilities.schema";
 import { PermissionsSchema } from "./schemas/permission.schema";
 
-export type AppAbility = PrismaAbility<AppAbilities>;
+export type { AppAbility } from "./casl-prisma";
 
 const createAppAbility = createPrismaAbility as CreateAbility<AppAbility>;
 
@@ -17,9 +17,5 @@ export function defineAbilityFor(user: UserSchema) {
 
 	PermissionsSchema[user.role](user, builder);
 
-	return builder.build({
-		detectSubjectType(subject) {
-			return subject.__typename;
-		},
-	});
+	return builder.build();
 }

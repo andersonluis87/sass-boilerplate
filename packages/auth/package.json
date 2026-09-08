@@ -12,6 +12,7 @@
 	"dependencies": {
 		"@casl/ability": "catalog:",
 		"@casl/prisma": "catalog:",
+		"@sass-boiler-plate/db": "workspace:*",
 		"@sass-boiler-plate/env": "workspace:*",
 		"zod": "catalog:"
 	},

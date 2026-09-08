@@ -1,7 +1,4 @@
-import prisma, {
-	type MemberUncheckedUpdateInput,
-	type MemberWhereUniqueInput,
-} from "@sass-boiler-plate/db";
+import prisma, { type Prisma } from "@sass-boiler-plate/db";
 
 interface GetMembershipData {
 	userId: string;
@@ -23,7 +20,7 @@ export class MemberRepository {
 		});
 	}
 
-	async findUnique(where: MemberWhereUniqueInput) {
+	async findUnique(where: Prisma.MemberWhereUniqueInput) {
 		return prisma.member.findUnique({
 			where,
 		});
@@ -43,7 +40,7 @@ export class MemberRepository {
 		return Boolean(membership);
 	}
 
-	async listOrganizationMembers(organizationId: string) {
+	async listOrganizationMembers(where: Prisma.MemberWhereInput) {
 		return prisma.member.findMany({
 			select: {
 				id: true,
@@ -57,20 +54,19 @@ export class MemberRepository {
 					},
 				},
 			},
-			where: {
-				organizationId: organizationId,
-			},
+			where,
 			orderBy: {
 				role: "asc",
 			},
 		});
 	}
 
-	async update(id: string, data: MemberUncheckedUpdateInput) {
-		return prisma.member.update({
-			where: {
-				id,
-			},
+	async update(
+		where: Prisma.MemberWhereInput,
+		data: Prisma.MemberUncheckedUpdateInput,
+	) {
+		return prisma.member.updateMany({
+			where,
 			data,
 		});
 	}

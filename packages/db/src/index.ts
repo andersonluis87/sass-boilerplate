@@ -1,25 +1,18 @@
+import { createCaslExtension } from "@casl/prisma/runtime";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { env } from "@sass-boiler-plate/env/server";
 
 import { PrismaClient } from "../prisma/generated/client";
 
 export type {
+	Invite,
 	Member,
 	Organization,
-	Projects,
+	Prisma,
+	Project,
 	Role,
 	User,
 } from "../prisma/generated/client";
-export type {
-	MemberUncheckedUpdateInput,
-	MemberWhereInput,
-	MemberWhereUniqueInput,
-} from "../prisma/generated/models/Member";
-export type {
-	OrganizationUncheckedUpdateInput,
-	OrganizationWhereInput,
-	OrganizationWhereUniqueInput,
-} from "../prisma/generated/models/Organization";
 
 export function createPrismaClient() {
 	const adapter = new PrismaPg({
@@ -48,7 +41,7 @@ export function createPrismaClient() {
 		});
 	});
 
-	return prismaClient;
+	return prismaClient.$extends(createCaslExtension());
 }
 
 const prisma = createPrismaClient();

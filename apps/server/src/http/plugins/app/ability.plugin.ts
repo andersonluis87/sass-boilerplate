@@ -1,4 +1,4 @@
-import type { RouteCan } from "@sass-boiler-plate/auth";
+import type { AppAbility, RouteCan } from "@sass-boiler-plate/auth";
 import { createAbilityFor } from "@sass-boiler-plate/auth";
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
@@ -9,15 +9,25 @@ declare module "fastify" {
 	interface FastifyContextConfig {
 		can?: RouteCan;
 	}
+
+	interface FastifyRequest {
+		ability?: AppAbility;
+	}
 }
 
 const ability = fp(
 	async (app: FastifyInstance) => {
 		app.addHook("preHandler", async (request) => {
 			const can = request.routeOptions.config.can;
+
+			if (request.routeOptions.config.authenticate && request.membership) {
+				request.ability = createAbilityFor(
+					request.currentUserId,
+					request.membership.role,
+				);
+			}
+
 			if (!can) {
-				// Log warning for debugging purposes
-				// TODO: Add a better logging system
 				console.warn(
 					"This route is not verified with access control",
 					request.routeOptions.url,
@@ -25,23 +35,17 @@ const ability = fp(
 				return;
 			}
 
-			if (!request.currentUserId || !request.membership) {
-				throw new UnauthorizedError("Invalid auth token");
-			}
-
-			// route must be configured with authenticate
 			if (!request.routeOptions.config.authenticate) {
 				throw new BadRequestError(
 					"This route must be configured with authenticate property",
 				);
 			}
 
-			const userAbility = createAbilityFor(
-				request.currentUserId,
-				request.membership?.role,
-			);
+			if (!request.ability) {
+				throw new UnauthorizedError("Invalid auth token");
+			}
 
-			if (userAbility.cannot(...can)) {
+			if (request.ability.cannot(can[0], can[1])) {
 				throw new UnauthorizedError(
 					"You are not allowed to perform this action",
 				);

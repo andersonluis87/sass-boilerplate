@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
 import { NotFoundError } from "@/shared/_errors/not-found-error";
+import { constrainWhere } from "@/utils/accessible-where.util";
 
 async function getMembers(app: FastifyInstance) {
 	const { memberRepository } = app;
@@ -32,8 +33,11 @@ async function getMembers(app: FastifyInstance) {
 					}),
 				},
 			},
+			config: {
+				authenticate: true,
+				can: ["get", "Member"],
+			},
 		},
-		// controller
 		async (
 			request: FastifyRequest<{ Params: { slug: string } }>,
 			reply: FastifyReply,
@@ -43,23 +47,8 @@ async function getMembers(app: FastifyInstance) {
 				throw new NotFoundError("Organization not found");
 			}
 
-			/*
-			const { organization, membership } =
-				await request.getCurrentUserMembership(slug);
-
-			const userId = request.currentUserId;
-			const { cannot } = checkAbilityFor(userId, membership.role);
-
-			if (cannot("get", "User")) {
-				throw new UnauthorizedError(
-					"You are not allowed to see organization members",
-				);
-			}
-			*/
-
-			// service
 			const members = await memberRepository.listOrganizationMembers(
-				organization.id,
+				constrainWhere(request, "get", "Member"),
 			);
 
 			if (!members) {

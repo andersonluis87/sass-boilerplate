@@ -1,8 +1,8 @@
 import prisma from "@sass-boiler-plate/db";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
 import { NotFoundError } from "@/shared/_errors/not-found-error";
+import { constrainWhere } from "@/utils/accessible-where.util";
 
 async function getProjects(app: FastifyInstance) {
 	app.get(
@@ -35,8 +35,11 @@ async function getProjects(app: FastifyInstance) {
 					}),
 				},
 			},
+			config: {
+				authenticate: true,
+				can: ["get", "Project"],
+			},
 		},
-		// controller
 		async (
 			request: FastifyRequest<{ Params: { slug: string } }>,
 			reply: FastifyReply,
@@ -46,20 +49,8 @@ async function getProjects(app: FastifyInstance) {
 				throw new NotFoundError("Organization not found");
 			}
 
-			/*
-			const { organization, membership } =
-				await request.getCurrentUserMembership(slug);
-
-			const userId = request.currentUserId;
-			const { cannot } = checkAbilityFor(userId, membership.role);
-
-			if (cannot("get", "Project")) {
-				throw new BadRequestError("You are not allowed to get projects");
-			}
-			*/
-
-			// service
-			const projects = await prisma.projects.findMany({
+			const where = constrainWhere(request, "get", "Project");
+			const projects = await prisma.project.findMany({
 				select: {
 					id: true,
 					name: true,
@@ -75,17 +66,11 @@ async function getProjects(app: FastifyInstance) {
 						},
 					},
 				},
-				where: {
-					organizationId: organization.id,
-				},
+				where,
 				orderBy: {
 					createdAt: "desc",
 				},
 			});
-
-			if (!projects) {
-				throw new BadRequestError("Project not found");
-			}
 
 			reply.status(200).send({ projects });
 		},

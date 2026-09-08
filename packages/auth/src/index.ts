@@ -1,6 +1,12 @@
-export { accessibleBy } from "@casl/prisma";
+export {
+	type AccessibleModel,
+	type AppAbility,
+	type AppAction,
+	accessibleBy,
+	type WhereInput,
+} from "./casl-prisma";
 export { createAbilityFor } from "./check-ability-for";
-export { type AppAbility, defineAbilityFor } from "./define-ability-for";
+export { defineAbilityFor } from "./define-ability-for";
 export { toOrganizationSubject } from "./helpers/organization.helper";
 export { toProjectSubject } from "./helpers/project.helper";
 export { OrganizationSchema } from "./models/organization.model";
