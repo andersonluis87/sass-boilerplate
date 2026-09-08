@@ -23,6 +23,7 @@
 		"db:down": "docker compose down"
 	},
 	"dependencies": {
+		"@casl/prisma": "catalog:",
 		"@prisma/adapter-pg": "^7.9.1",
 		"@prisma/client": "catalog:",
 		"@sass-boiler-plate/env": "workspace:*",

@@ -12,95 +12,97 @@ import { routeTree } from "./routeTree.gen";
 import { TRPCProvider } from "./utils/trpc";
 
 function getServerUrl(url: string) {
-  const processEnv = (
-    globalThis as {
-      process?: { env?: Record<string, string | undefined> };
-    }
-  ).process?.env;
-  if (typeof window === "undefined" && processEnv?.SERVER_URL) {
-    return processEnv.SERVER_URL.endsWith("/")
-      ? processEnv.SERVER_URL.slice(0, -1)
-      : processEnv.SERVER_URL;
-  }
+	const processEnv = (
+		globalThis as {
+			process?: { env?: Record<string, string | undefined> };
+		}
+	).process?.env;
+	if (typeof window === "undefined" && processEnv?.SERVER_URL) {
+		return processEnv.SERVER_URL.endsWith("/")
+			? processEnv.SERVER_URL.slice(0, -1)
+			: processEnv.SERVER_URL;
+	}
 
-  const normalized = url.endsWith("/") ? url.slice(0, -1) : url;
+	const normalized = url.endsWith("/") ? url.slice(0, -1) : url;
 
-  if (!normalized.startsWith("/")) {
-    return normalized;
-  }
+	if (!normalized.startsWith("/")) {
+		return normalized;
+	}
 
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}${normalized}`;
-  }
+	if (typeof window !== "undefined") {
+		return `${window.location.origin}${normalized}`;
+	}
 
-  const vercelUrl =
-    processEnv?.VERCEL_ENV === "production"
-      ? (processEnv?.VERCEL_PROJECT_PRODUCTION_URL ?? processEnv?.VERCEL_URL)
-      : (processEnv?.VERCEL_URL ?? processEnv?.VERCEL_PROJECT_PRODUCTION_URL);
-  if (vercelUrl) {
-    const origin = vercelUrl.startsWith("http") ? vercelUrl : `https://${vercelUrl}`;
-    return `${origin}${normalized}`;
-  }
+	const vercelUrl =
+		processEnv?.VERCEL_ENV === "production"
+			? (processEnv?.VERCEL_PROJECT_PRODUCTION_URL ?? processEnv?.VERCEL_URL)
+			: (processEnv?.VERCEL_URL ?? processEnv?.VERCEL_PROJECT_PRODUCTION_URL);
+	if (vercelUrl) {
+		const origin = vercelUrl.startsWith("http")
+			? vercelUrl
+			: `https://${vercelUrl}`;
+		return `${origin}${normalized}`;
+	}
 
-  return `http://localhost:3000${normalized}`;
+	return `http://localhost:3000${normalized}`;
 }
 function createQueryClient() {
-  return new QueryClient({
-    queryCache: new QueryCache({
-      onError: (error, query) => {
-        toast.error(error.message, {
-          action: {
-            label: "retry",
-            onClick: () => {
-              query.invalidate();
-            },
-          },
-        });
-      },
-    }),
-    defaultOptions: { queries: { staleTime: 60 * 1000 } },
-  });
+	return new QueryClient({
+		queryCache: new QueryCache({
+			onError: (error, query) => {
+				toast.error(error.message, {
+					action: {
+						label: "retry",
+						onClick: () => {
+							query.invalidate();
+						},
+					},
+				});
+			},
+		}),
+		defaultOptions: { queries: { staleTime: 60 * 1000 } },
+	});
 }
 
 const trpcClient = createTRPCClient<AppRouter>({
-  links: [
-    httpBatchLink({
-      url: `${getServerUrl(env.VITE_SERVER_URL)}/trpc`,
-    }),
-  ],
+	links: [
+		httpBatchLink({
+			url: `${getServerUrl(env.VITE_SERVER_URL)}/trpc`,
+		}),
+	],
 });
 
 export const getRouter = () => {
-  const queryClient = createQueryClient();
-  const trpc = createTRPCOptionsProxy({
-    client: trpcClient,
-    queryClient,
-  });
+	const queryClient = createQueryClient();
+	const trpc = createTRPCOptionsProxy({
+		client: trpcClient,
+		queryClient,
+	});
 
-  const router = createTanStackRouter({
-    routeTree,
-    scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
-    context: { trpc, queryClient },
-    defaultPendingComponent: () => <Loader />,
-    defaultNotFoundComponent: () => <div>Not Found</div>,
-    Wrap: ({ children }) => (
-      <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
-        {children}
-      </TRPCProvider>
-    ),
-  });
+	const router = createTanStackRouter({
+		routeTree,
+		scrollRestoration: true,
+		defaultPreloadStaleTime: 0,
+		context: { trpc, queryClient },
+		defaultPendingComponent: () => <Loader />,
+		defaultNotFoundComponent: () => <div>Not Found</div>,
+		Wrap: ({ children }) => (
+			<TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
+				{children}
+			</TRPCProvider>
+		),
+	});
 
-  setupRouterSsrQueryIntegration({
-    router,
-    queryClient,
-  });
+	setupRouterSsrQueryIntegration({
+		router,
+		queryClient,
+	});
 
-  return router;
+	return router;
 };
 
 declare module "@tanstack/react-router" {
-  interface Register {
-    router: ReturnType<typeof getRouter>;
-  }
+	interface Register {
+		router: ReturnType<typeof getRouter>;
+	}
 }
