@@ -1,5 +1,5 @@
 import type { AbilityBuilder } from "@casl/ability";
-import type { AppAbility } from "..";
+import type { AppAbility } from "../define-ability-for";
 import type { UserSchema } from "../models/user.model";
 import type { Role } from "./role.schema";
 
@@ -13,8 +13,10 @@ export const PermissionsSchema: Record<Role, PermissionsByRole> = {
 		can("manage", "all");
 	},
 	MEMBER(user, { can }) {
-		can(["manage", "get"], "Project");
-		can(["update", "delete"], "Project", { ownerId: { $eq: user.id } });
+		can(["get", "create"], "Project");
+
+		// FIXME: This is not properly typed { params should respect the schema }
+		can(["update", "delete"], "Project", { ownerId: user.id });
 	},
 	BILLING(_, { can }) {
 		can("manage", "Billing");

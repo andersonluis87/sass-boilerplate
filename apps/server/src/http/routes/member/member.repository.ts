@@ -1,14 +1,11 @@
-import prisma, { type Role } from "@sass-boiler-plate/db";
+import prisma, {
+	type MemberUncheckedUpdateInput,
+	type MemberWhereUniqueInput,
+} from "@sass-boiler-plate/db";
 
 interface GetMembershipData {
 	userId: string;
 	slug: string;
-}
-
-interface UpdateMemberData {
-	id: string;
-	role: Role;
-	organizationId: string;
 }
 
 export class MemberRepository {
@@ -24,6 +21,26 @@ export class MemberRepository {
 				organization: true,
 			},
 		});
+	}
+
+	async findUnique(where: MemberWhereUniqueInput) {
+		return prisma.member.findUnique({
+			where,
+		});
+	}
+
+	async isAdmin(userId: string) {
+		const membership = await prisma.member.findFirst({
+			where: {
+				userId,
+				role: "ADMIN",
+			},
+			select: {
+				id: true,
+			},
+		});
+
+		return Boolean(membership);
 	}
 
 	async listOrganizationMembers(organizationId: string) {
@@ -49,15 +66,12 @@ export class MemberRepository {
 		});
 	}
 
-	async update({ id, role, organizationId }: UpdateMemberData) {
+	async update(id: string, data: MemberUncheckedUpdateInput) {
 		return prisma.member.update({
 			where: {
 				id,
-				organizationId,
 			},
-			data: {
-				role,
-			},
+			data,
 		});
 	}
 }

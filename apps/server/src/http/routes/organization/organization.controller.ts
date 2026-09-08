@@ -1,15 +1,15 @@
-import { OrganizationSchema } from "@sass-boiler-plate/auth";
-import prisma from "@sass-boiler-plate/db";
+import type { OrganizationWhereInput } from "@sass-boiler-plate/db";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { BadRequestError } from "@/shared/_errors/bad-request-error";
-import { UnauthorizedError } from "@/shared/_errors/unauthorized-error";
-import { getUserPermissions } from "@/shared/get-user-permissions";
+import { NotFoundError } from "@/shared/_errors/not-found-error";
 import type {
 	CreateOrganization,
 	TransferOrganization,
 	UpdateOrganization,
 } from "@/shared/schema/organization.schema";
 import type { SlugSchema } from "@/shared/schema/slug.schema";
+import { createSlug } from "@/utils/create-slug.util";
+import { organizationWithRoleMapper } from "./mappers/organization-with-role.mapper";
 import type { OrganizationRepository } from "./organization.repository";
 
 export class OrganizationController {
@@ -22,26 +22,23 @@ export class OrganizationController {
 	// TODO: Paginate this route
 	async list(request: FastifyRequest) {
 		const organizations = await this.repository.list(request.currentUserId);
-		return { organizations };
+		return { organizations: organizationWithRoleMapper(organizations) };
 	}
 
-	// TODO: remove dependency on request.getUserMembership
-	async get(request: FastifyRequest<{ Params: SlugSchema }>) {
-		const { slug } = request.params;
-		const { organization } = await request.getUserMembership(slug);
-		return { organization };
+	// This method is just for convenience.
+	// The organization is hydrated in the authentication plugin
+	async get(request: FastifyRequest) {
+		return { organization: request.organization };
 	}
 
-	async getMembership(request: FastifyRequest<{ Params: SlugSchema }>) {
-		const { slug } = request.params;
-		const {
-			membership: { id, role, organizationId },
-		} = await request.getUserMembership(slug);
+	// This method is just for convenience.
+	// The membership is hydrated in the authentication plugin
+	async getMembership(request: FastifyRequest) {
 		return {
 			membership: {
-				id,
-				role,
-				organizationId,
+				id: request.membership?.id,
+				role: request.membership?.role,
+				organizationId: request.membership?.organizationId,
 			},
 		};
 	}
@@ -52,22 +49,11 @@ export class OrganizationController {
 		}>,
 		reply: FastifyReply,
 	) {
-		const userId = request.currentUserId;
+		const { currentUserId: userId } = request;
 		const { domain, name, shouldAttachUsersByDomain } = request.body;
-		const slug = this.app.createSlug(name);
+		const slug = createSlug(name);
 
-		if (domain) {
-			const organizationAlreadyExists = await this.repository.exists({
-				domain,
-				slug,
-			});
-
-			if (organizationAlreadyExists) {
-				throw new BadRequestError(
-					"Organization with this domain or name already exists",
-				);
-			}
-		}
+		await this.ensureOrganizationUnique(slug, domain);
 
 		const id = await this.repository.create({
 			userId,
@@ -84,26 +70,16 @@ export class OrganizationController {
 		request: FastifyRequest<{ Params: SlugSchema }>,
 		reply: FastifyReply,
 	) {
-		const { slug } = request.params;
-		const userId = request.currentUserId;
+		const { currentUserId: userId, organization } = request;
 
-		const {
-			membership: { role },
-			organization,
-		} = await request.getUserMembership(slug);
-		const authOrganization = OrganizationSchema.parse(organization);
-		const { cannot } = getUserPermissions(userId, role);
-		if (cannot("delete", authOrganization)) {
-			throw new UnauthorizedError(
+		// TODO: add accesibleBy to constrain query...
+		// TODO: Remove members from organization before shutting it down
+		const deleted = await this.repository.delete(organization.id, userId);
+		if (!deleted) {
+			throw new BadRequestError(
 				"You are not allowed to shutdown this organization",
 			);
 		}
-
-		await prisma.organization.delete({
-			where: {
-				id: organization.id,
-			},
-		});
 
 		return reply.status(204).send(null);
 	}
@@ -115,31 +91,17 @@ export class OrganizationController {
 		}>,
 		reply: FastifyReply,
 	) {
-		const { slug } = request.params;
 		const { transferToUserId } = request.body;
 
-		const userId = request.currentUserId;
-		const {
-			membership: { role },
-			organization,
-		} = await request.getUserMembership(slug);
-
-		const authOrganization = OrganizationSchema.parse(organization);
-
-		const { cannot } = getUserPermissions(userId, role);
-
-		if (cannot("transfer_ownership", authOrganization)) {
-			throw new UnauthorizedError(
-				"You are not allowed to transfer this organization ownership",
-			);
+		const { organization } = request;
+		if (!organization) {
+			throw new NotFoundError("Organization not found");
 		}
 
-		const newOrganizationOwner = await prisma.member.findUnique({
-			where: {
-				organizationId_userId: {
-					organizationId: organization.id,
-					userId: transferToUserId,
-				},
+		const newOrganizationOwner = await this.app.memberRepository.findUnique({
+			organizationId_userId: {
+				organizationId: organization.id,
+				userId: transferToUserId,
 			},
 		});
 
@@ -149,27 +111,7 @@ export class OrganizationController {
 			);
 		}
 
-		await prisma.$transaction([
-			prisma.member.update({
-				where: {
-					organizationId_userId: {
-						organizationId: organization.id,
-						userId,
-					},
-				},
-				data: {
-					role: "MEMBER",
-				},
-			}),
-			prisma.organization.update({
-				where: {
-					id: organization.id,
-				},
-				data: {
-					ownerId: transferToUserId,
-				},
-			}),
-		]);
+		await this.repository.transferOwnership(organization.id, transferToUserId);
 
 		return reply.status(204).send(null);
 	}
@@ -183,30 +125,18 @@ export class OrganizationController {
 	) {
 		const { slug } = request.params;
 		const { name, domain, shouldAttachUsersByDomain } = request.body;
-		const userId = request.currentUserId;
+		const organization = request.organization;
 
-		const {
-			membership: { role },
-			organization,
-		} = await request.getUserMembership(slug);
-
-		const authOrganization = OrganizationSchema.parse(organization);
-
-		const { cannot } = getUserPermissions(userId, role);
-
-		if (cannot("update", authOrganization)) {
-			throw new UnauthorizedError(
-				"You are not allowed to update this organization",
-			);
+		// TODO: Improve the way we are returning the organization
+		if (!organization) {
+			throw new NotFoundError("Organization not found");
 		}
 
 		if (domain) {
-			const organizationExistsByDomain = await prisma.organization.findFirst({
-				where: {
-					domain,
-					slug: {
-						not: slug,
-					},
+			const organizationExistsByDomain = await this.repository.findFirst({
+				domain,
+				slug: {
+					not: slug,
 				},
 			});
 
@@ -217,13 +147,30 @@ export class OrganizationController {
 			}
 		}
 
-		await this.repository.update({
-			id: organization.id,
+		await this.repository.update(organization.id, {
 			name,
 			domain,
 			shouldAttachUsersByDomain,
 		});
 
 		return reply.status(204).send(null);
+	}
+
+	private async ensureOrganizationUnique(slug: string, domain?: string) {
+		const filters: OrganizationWhereInput[] = [{ slug }];
+
+		if (domain) {
+			filters.push({ domain });
+		}
+
+		const exists = await this.repository.exists({
+			OR: filters,
+		});
+
+		if (exists) {
+			throw new BadRequestError(
+				"Organization with this domain or name already exists",
+			);
+		}
 	}
 }

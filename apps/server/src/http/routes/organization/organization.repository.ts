@@ -1,14 +1,12 @@
-import prisma from "@sass-boiler-plate/db";
-import type {
-	CreateOrganization,
-	Organization,
-	UpdateOrganization,
-} from "@/shared/schema/organization.schema";
-import type { OrganizationListItem } from "./organization.types";
+import prisma, {
+	type OrganizationUncheckedUpdateInput,
+	type OrganizationWhereInput,
+} from "@sass-boiler-plate/db";
+import type { CreateOrganization } from "@/shared/schema/organization.schema";
 
 export class OrganizationRepository {
 	async list(userId: string) {
-		const organizations = await prisma.organization.findMany({
+		return prisma.organization.findMany({
 			select: {
 				id: true,
 				name: true,
@@ -31,8 +29,6 @@ export class OrganizationRepository {
 				},
 			},
 		});
-
-		return this.toOrganizationsWithRole(organizations);
 	}
 
 	async create({ userId, ...data }: CreateOrganization) {
@@ -52,8 +48,8 @@ export class OrganizationRepository {
 		return id;
 	}
 
-	async update({ id, ...data }: UpdateOrganization) {
-		await prisma.organization.update({
+	async update(id: string, data: OrganizationUncheckedUpdateInput) {
+		return prisma.organization.update({
 			where: {
 				id,
 			},
@@ -61,22 +57,57 @@ export class OrganizationRepository {
 		});
 	}
 
-	async exists({ domain, slug }: Pick<Organization, "domain" | "slug">) {
-		const count = await prisma.organization.count({
+	async delete(id: string, userId: string) {
+		const deleted = await prisma.organization.delete({
 			where: {
-				OR: [{ domain }, { slug }],
+				id,
+				members: {
+					some: {
+						userId,
+					},
+				},
 			},
+		});
+
+		return deleted;
+	}
+
+	async findFirst(where: OrganizationWhereInput) {
+		return prisma.organization.findFirst({
+			where,
+		});
+	}
+
+	async exists(where: OrganizationWhereInput) {
+		const count = await prisma.organization.count({
+			where,
 		});
 
 		return count > 0;
 	}
 
-	private toOrganizationsWithRole(organizations: OrganizationListItem[]) {
-		return organizations.map(({ members, ...organization }) => {
-			return {
-				...organization,
-				role: members[0]?.role ?? "MEMBER",
-			};
-		});
+	async transferOwnership(id: string, userId: string) {
+		await prisma.$transaction(async (tx) => [
+			await tx.member.update({
+				where: {
+					organizationId_userId: {
+						organizationId: id,
+						userId,
+					},
+				},
+				data: {
+					role: "MEMBER",
+				},
+			}),
+
+			await tx.organization.update({
+				where: {
+					id,
+				},
+				data: {
+					ownerId: userId,
+				},
+			}),
+		]);
 	}
 }

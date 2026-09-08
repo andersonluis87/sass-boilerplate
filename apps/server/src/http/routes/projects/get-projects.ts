@@ -1,10 +1,8 @@
+import prisma from "@sass-boiler-plate/db";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-
-import prisma from "@sass-boiler-plate/db";
-import { getUserPermissions } from "@/shared/get-user-permissions.js";
-
 import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
+import { NotFoundError } from "@/shared/_errors/not-found-error";
 
 async function getProjects(app: FastifyInstance) {
 	app.get(
@@ -43,16 +41,22 @@ async function getProjects(app: FastifyInstance) {
 			request: FastifyRequest<{ Params: { slug: string } }>,
 			reply: FastifyReply,
 		) => {
-			const { slug } = request.params;
+			const { organization } = request;
+			if (!organization) {
+				throw new NotFoundError("Organization not found");
+			}
+
+			/*
 			const { organization, membership } =
-				await request.getUserMembership(slug);
+				await request.getCurrentUserMembership(slug);
 
 			const userId = request.currentUserId;
-			const { cannot } = getUserPermissions(userId, membership.role);
+			const { cannot } = checkAbilityFor(userId, membership.role);
 
 			if (cannot("get", "Project")) {
 				throw new BadRequestError("You are not allowed to get projects");
 			}
+			*/
 
 			// service
 			const projects = await prisma.projects.findMany({

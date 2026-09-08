@@ -1,21 +1,19 @@
+import prisma from "@sass-boiler-plate/db";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-
-import { getUserPermissions } from "@/shared/get-user-permissions.js";
-import prisma from "@sass-boiler-plate/db";
-
 import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
+import { NotFoundError } from "@/shared/_errors/not-found-error";
 
 async function getProject(app: FastifyInstance) {
 	app.get(
-		"/organizations/:organizationSlug/projects/:projectSlug",
+		"/organizations/:slug/projects/:projectSlug",
 		{
 			schema: {
 				tags: ["projects"],
 				summary: "Get project details",
 				security: [{ bearerAuth: [] }],
 				params: z.object({
-					organizationSlug: z.string(),
+					slug: z.string(),
 					projectSlug: z.string(),
 				}),
 				response: {
@@ -39,20 +37,27 @@ async function getProject(app: FastifyInstance) {
 		// controller
 		async (
 			request: FastifyRequest<{
-				Params: { organizationSlug: string; projectSlug: string };
+				Params: { slug: string; projectSlug: string };
 			}>,
 			reply: FastifyReply,
 		) => {
-			const { organizationSlug, projectSlug } = request.params;
+			const { projectSlug } = request.params;
+			const { organization } = request;
+			if (!organization) {
+				throw new NotFoundError("Organization not found");
+			}
+
+			/*
 			const { organization, membership } =
-				await request.getUserMembership(organizationSlug);
+				await request.getCurrentUserMembership(slug);
 
 			const userId = request.currentUserId;
-			const { cannot } = getUserPermissions(userId, membership.role);
+			const { cannot } = checkAbilityFor(userId, membership.role);
 
 			if (cannot("get", "Project")) {
 				throw new BadRequestError("You are not allowed to get project details");
 			}
+			*/
 
 			// service
 			const project = await prisma.projects.findUnique({

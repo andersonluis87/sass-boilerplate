@@ -1,8 +1,7 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import z from "zod";
-
 import prisma from "@sass-boiler-plate/db";
 import argon2 from "argon2";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import z from "zod";
 import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
 
 async function authenticateWithPassword(app: FastifyInstance) {

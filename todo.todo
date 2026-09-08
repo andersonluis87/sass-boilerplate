@@ -1,0 +1,20 @@
+# Features
+[ ] Add journaling
+[ ] Remove members from organization before shutting it down
+[ ] Add pagination or cursor pagination
+[ ] Add email sending
+[ ] Add query constraints to ensure data integrity (auto join with members)
+[ ] Make admin org-scoped
+[ ] Add support for super admin role (it should be able to manage all orgs)
+
+ 
+# Security
+[ ] Add rate limiting
+[ ] Add helmet
+
+# Performance
+[ ] Add caching
+
+# Monitoring
+[ ] Add pino or winston logger
+[ ] Add Posthog, open telemetry or sentry

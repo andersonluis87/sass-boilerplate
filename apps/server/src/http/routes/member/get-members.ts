@@ -2,21 +2,20 @@ import { Role } from "@sass-boiler-plate/auth";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
-import { UnauthorizedError } from "@/shared/_errors/unauthorized-error.js";
-import { getUserPermissions } from "@/shared/get-user-permissions.js";
+import { NotFoundError } from "@/shared/_errors/not-found-error";
 
 async function getMembers(app: FastifyInstance) {
 	const { memberRepository } = app;
 
 	app.get(
-		"/organizations/:organizationSlug/members",
+		"/organizations/:slug/members",
 		{
 			schema: {
 				tags: ["members"],
 				summary: "Get all organization members",
 				security: [{ bearerAuth: [] }],
 				params: z.object({
-					organizationSlug: z.string(),
+					slug: z.string(),
 				}),
 				response: {
 					200: z.object({
@@ -36,21 +35,27 @@ async function getMembers(app: FastifyInstance) {
 		},
 		// controller
 		async (
-			request: FastifyRequest<{ Params: { organizationSlug: string } }>,
+			request: FastifyRequest<{ Params: { slug: string } }>,
 			reply: FastifyReply,
 		) => {
-			const { organizationSlug } = request.params;
+			const { organization } = request;
+			if (!organization) {
+				throw new NotFoundError("Organization not found");
+			}
+
+			/*
 			const { organization, membership } =
-				await request.getUserMembership(organizationSlug);
+				await request.getCurrentUserMembership(slug);
 
 			const userId = request.currentUserId;
-			const { cannot } = getUserPermissions(userId, membership.role);
+			const { cannot } = checkAbilityFor(userId, membership.role);
 
 			if (cannot("get", "User")) {
 				throw new UnauthorizedError(
 					"You are not allowed to see organization members",
 				);
 			}
+			*/
 
 			// service
 			const members = await memberRepository.listOrganizationMembers(

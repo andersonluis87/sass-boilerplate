@@ -1,8 +1,7 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { z } from "zod";
-
 import prisma from "@sass-boiler-plate/db";
 import argon2 from "argon2";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { z } from "zod";
 
 import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
 
@@ -39,12 +38,16 @@ async function createAccount(app: FastifyInstance) {
 			}
 
 			const domain = email.split("@")[1];
-			const autoJoinOrganization = await prisma.organization.findFirst({
+			const organizationFromDomain = await prisma.organization.findFirst({
 				where: {
 					domain,
 					shouldAttachUsersByDomain: true,
 				},
 			});
+
+			if (!organizationFromDomain) {
+				throw new BadRequestError("Organization not found");
+			}
 
 			const passwordHash = await argon2.hash(password);
 
@@ -53,10 +56,10 @@ async function createAccount(app: FastifyInstance) {
 					email,
 					name,
 					passwordHash,
-					member_on: autoJoinOrganization
+					member_on: organizationFromDomain
 						? {
 								create: {
-									organizationId: autoJoinOrganization.id,
+									organizationId: organizationFromDomain.id,
 								},
 							}
 						: undefined,

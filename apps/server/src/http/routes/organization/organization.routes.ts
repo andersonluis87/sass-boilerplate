@@ -11,7 +11,6 @@ import UpdateOrganizationRouteSchema from "./schemas/org-update.schema";
 const organizationRoutes = (app: FastifyZodInstance) => {
 	const { organizationController: controller } = app;
 
-	//TODO: Add authentication and authorization (per route)
 	app
 		.get("/organizations", {
 			schema: ListOrganizationRouteSchema,
@@ -45,6 +44,7 @@ const organizationRoutes = (app: FastifyZodInstance) => {
 			schema: ShutdownOrganizationRouteSchema,
 			config: {
 				authenticate: true,
+				can: ["delete", "Organization"],
 			},
 			handler: controller.shutdown.bind(controller),
 		})
@@ -52,6 +52,7 @@ const organizationRoutes = (app: FastifyZodInstance) => {
 			schema: TransferOrganizationRouteSchema,
 			config: {
 				authenticate: true,
+				can: ["transfer_ownership", "Organization"],
 			},
 			handler: controller.transfer.bind(controller),
 		})
@@ -59,6 +60,7 @@ const organizationRoutes = (app: FastifyZodInstance) => {
 			schema: UpdateOrganizationRouteSchema,
 			config: {
 				authenticate: true,
+				can: ["update", "Organization"],
 			},
 			handler: controller.update.bind(controller),
 		});

@@ -1,11 +1,8 @@
-import { ProjectSchema } from "@sass-boiler-plate/auth";
+import prisma from "@sass-boiler-plate/db";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-
-import prisma from "@sass-boiler-plate/db";
-import { getUserPermissions } from "@/shared/get-user-permissions.js";
-
 import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
+import { NotFoundError } from "@/shared/_errors/not-found-error";
 
 async function updateProject(app: FastifyInstance) {
 	app.patch(
@@ -17,13 +14,13 @@ async function updateProject(app: FastifyInstance) {
 				security: [{ bearerAuth: [] }],
 				params: z.object({
 					slug: z.string(),
-					id: z.string().uuid(),
+					id: z.uuid(),
 				}),
 				body: z
 					.object({
 						name: z.string(),
 						description: z.string(),
-						avatarUrl: z.string().url(),
+						avatarUrl: z.url(),
 					})
 					.strict()
 					.partial(),
@@ -40,9 +37,11 @@ async function updateProject(app: FastifyInstance) {
 			}>,
 			reply: FastifyReply,
 		) => {
-			const { slug, id } = request.params;
-			const { organization, membership } =
-				await request.getUserMembership(slug);
+			const { id } = request.params;
+			const { organization } = request;
+			if (!organization) {
+				throw new NotFoundError("Organization not found");
+			}
 
 			const project = await prisma.projects.findUnique({
 				where: {
@@ -55,14 +54,14 @@ async function updateProject(app: FastifyInstance) {
 				throw new BadRequestError("Project not found");
 			}
 
-			const userId = request.currentUserId;
-			const { cannot } = getUserPermissions(userId, membership.role);
+			/*const userId = request.currentUserId;
+			const { cannot } = checkAbilityFor(userId, membership.role);
 			const authProject = ProjectSchema.parse(project);
 
 			if (cannot("update", authProject)) {
 				throw new BadRequestError("You are not allowed to update this project");
 			}
-
+			*/
 			const { name, description } = request.body;
 
 			await prisma.projects.update({

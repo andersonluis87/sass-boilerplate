@@ -7,6 +7,7 @@ import { SECURITY, TAGS } from "./org.constant";
 const GetOrganizationRouteSchema: RouteSchema = {
 	tags: TAGS,
 	summary: "Get an organization",
+	description: "Get an organization by its slug",
 	security: SECURITY,
 	params: SlugSchema,
 	response: {

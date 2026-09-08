@@ -5,6 +5,7 @@ import { OrganizationSchema } from "../models/organization.model";
 export const OrganizationSubject = z.tuple([
 	z.union([
 		z.literal("manage"),
+		z.literal("get"),
 		z.literal("create"),
 		z.literal("update"),
 		z.literal("delete"),
@@ -12,4 +13,5 @@ export const OrganizationSubject = z.tuple([
 	]),
 	z.union([z.literal("Organization"), OrganizationSchema]),
 ]);
+
 export type OrganizationSubject = z.infer<typeof OrganizationSubject>;

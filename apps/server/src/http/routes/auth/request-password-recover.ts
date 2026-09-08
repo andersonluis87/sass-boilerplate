@@ -1,7 +1,6 @@
+import prisma from "@sass-boiler-plate/db";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import z from "zod";
-
-import prisma from "@sass-boiler-plate/db";
 
 async function requestPasswordRecover(app: FastifyInstance) {
 	app.post(

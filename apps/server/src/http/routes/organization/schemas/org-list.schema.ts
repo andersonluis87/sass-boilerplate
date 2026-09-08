@@ -8,6 +8,7 @@ const ListOrganizationRouteSchema: RouteSchema = {
 	tags: TAGS,
 	summary: "List organizations",
 	security: SECURITY,
+	description: "List organizations where the current user is a member",
 	response: {
 		200: z.object({
 			organizations: z.array(

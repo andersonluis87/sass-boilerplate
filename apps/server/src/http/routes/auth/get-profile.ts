@@ -1,7 +1,6 @@
+import prisma from "@sass-boiler-plate/db";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import z from "zod";
-
-import prisma from "@sass-boiler-plate/db";
 
 import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
 

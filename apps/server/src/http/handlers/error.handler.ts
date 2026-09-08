@@ -1,7 +1,9 @@
-import { BadRequestError } from "@/shared/_errors/bad-request-error";
-import { UnauthorizedError } from "@/shared/_errors/unauthorized-error";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { ZodError } from "zod";
+import { hasZodFastifySchemaValidationErrors } from "fastify-type-provider-zod";
+import z, { ZodError } from "zod";
+import { BadRequestError } from "@/shared/_errors/bad-request-error";
+import { NotFoundError } from "@/shared/_errors/not-found-error";
+import { UnauthorizedError } from "@/shared/_errors/unauthorized-error";
 
 type FastifyErrorHandler = FastifyInstance["errorHandler"];
 
@@ -10,10 +12,23 @@ export const errorHandler: FastifyErrorHandler = (
 	_: FastifyRequest,
 	reply: FastifyReply,
 ) => {
+	if (hasZodFastifySchemaValidationErrors(error)) {
+		return reply.status(400).send({
+			message: "Validation error",
+			errors: error.validation,
+		});
+	}
+
 	if (error instanceof ZodError) {
 		return reply.status(400).send({
 			message: "Validation error",
-			errors: error.flatten().fieldErrors,
+			errors: z.treeifyError(error),
+		});
+	}
+
+	if (error instanceof NotFoundError) {
+		return reply.status(404).send({
+			message: error.message,
 		});
 	}
 
@@ -29,8 +44,8 @@ export const errorHandler: FastifyErrorHandler = (
 		});
 	}
 
+	// TODO: Send error to Sentry or other error tracking service
 	console.error(error);
-	// Send error to Sentry or other error tracking service
 
 	return reply.status(500).send({ message: "Internal server error" });
 };

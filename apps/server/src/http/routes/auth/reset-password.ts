@@ -1,8 +1,7 @@
+import prisma from "@sass-boiler-plate/db";
+import argon2 from "argon2";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import z from "zod";
-import argon2 from "argon2";
-
-import prisma from "@sass-boiler-plate/db";
 
 import { UnauthorizedError } from "@/shared/_errors/unauthorized-error.js";
 

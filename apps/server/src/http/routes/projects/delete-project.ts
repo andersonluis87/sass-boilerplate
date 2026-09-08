@@ -1,10 +1,8 @@
+import prisma from "@sass-boiler-plate/db";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-
-import { getUserPermissions } from "@/shared/get-user-permissions.js";
-import { ProjectSchema } from "@sass-boiler-plate/auth";
-import prisma from "@sass-boiler-plate/db";
 import { BadRequestError } from "@/shared/_errors/bad-request-error.js";
+import { NotFoundError } from "@/shared/_errors/not-found-error";
 
 async function deleteProject(app: FastifyInstance) {
 	app.delete(
@@ -16,7 +14,7 @@ async function deleteProject(app: FastifyInstance) {
 				security: [{ bearerAuth: [] }],
 				params: z.object({
 					slug: z.string(),
-					id: z.string().uuid(),
+					id: z.uuid(),
 				}),
 				response: {
 					204: z.null(),
@@ -30,9 +28,11 @@ async function deleteProject(app: FastifyInstance) {
 			}>,
 			reply: FastifyReply,
 		) => {
-			const { slug, id } = request.params;
-			const { organization, membership } =
-				await request.getUserMembership(slug);
+			const { id } = request.params;
+			const { organization } = request;
+			if (!organization) {
+				throw new NotFoundError("Organization not found");
+			}
 
 			const project = await prisma.projects.findUnique({
 				where: {
@@ -45,13 +45,15 @@ async function deleteProject(app: FastifyInstance) {
 				throw new BadRequestError("Project not found");
 			}
 
-			const userId = request.currentUserId;
-			const { cannot } = getUserPermissions(userId, membership.role);
+			/*const userId = request.currentUserId;
+			
+			const { cannot } = checkAbilityFor(userId, membership.role);
 			const authProject = ProjectSchema.parse(project);
 
 			if (cannot("delete", authProject)) {
 				throw new BadRequestError("You are not allowed to remove this project");
 			}
+			*/
 
 			await prisma.projects.delete({
 				where: {

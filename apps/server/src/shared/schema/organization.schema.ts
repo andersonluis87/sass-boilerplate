@@ -1,12 +1,11 @@
 import { z } from "zod";
-import { SlugSchema } from "./slug.schema";
 
 export const OrganizationBaseSchema = z.object({
 	id: z.uuid(),
-	name: z.string(),
-	slug: z.string(),
-	domain: z.string().nullable(),
-	shouldAttachUsersByDomain: z.boolean(),
+	name: z.string().nonempty(),
+	slug: z.string().nonempty(),
+	domain: z.string().nonempty().optional(),
+	shouldAttachUsersByDomain: z.boolean().default(false),
 	avatarUrl: z.url().nullable(),
 	ownerId: z.uuid(),
 	createdAt: z.date(),
@@ -18,14 +17,6 @@ export const ManageOrganizationSchema = OrganizationBaseSchema.pick({
 	domain: true,
 	shouldAttachUsersByDomain: true,
 });
-
-export const CreateOrganizationSchema = SlugSchema.and(
-	ManageOrganizationSchema,
-).and(
-	z.object({
-		userId: z.uuid(),
-	}),
-);
 
 export const UpdateOrganizationSchema = ManageOrganizationSchema.and(
 	z.object({
@@ -39,6 +30,9 @@ export const TransferOrganizationSchema = z.object({
 
 export type Organization = z.infer<typeof OrganizationBaseSchema>;
 export type ManageOrganization = z.infer<typeof ManageOrganizationSchema>;
-export type CreateOrganization = z.infer<typeof CreateOrganizationSchema>;
+export type CreateOrganization = z.infer<typeof ManageOrganizationSchema> & {
+	userId: string;
+	slug: string;
+};
 export type UpdateOrganization = z.infer<typeof UpdateOrganizationSchema>;
 export type TransferOrganization = z.infer<typeof TransferOrganizationSchema>;

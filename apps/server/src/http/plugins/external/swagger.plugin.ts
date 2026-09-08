@@ -2,7 +2,17 @@ import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUI from "@fastify/swagger-ui";
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
-import { jsonSchemaTransform } from "fastify-type-provider-zod";
+import { createJsonSchemaTransform } from "fastify-type-provider-zod";
+
+const jsonSchemaTransform = createJsonSchemaTransform({
+	zodToJsonConfig: {
+		override: ({ jsonSchema }) => {
+			if (jsonSchema.format === "uuid") {
+				delete jsonSchema.pattern;
+			}
+		},
+	},
+});
 
 async function registerSwagger(app: FastifyInstance) {
 	await app.register(fastifySwagger, {
