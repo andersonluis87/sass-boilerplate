@@ -1,13 +1,12 @@
-import type { RouteSchema } from "@/instance.types";
 import { TransferOrganizationSchema } from "@/shared/schema/organization.schema";
 import { NullResponseSchema } from "@/shared/schema/response.schema";
 import { SlugSchema } from "@/shared/schema/slug.schema";
-import { SECURITY, TAGS } from "./org.constant";
+import { type RouteSchema, Security, Tags } from "@/types/route-schema.type";
 
 const TransferOrganizationRouteSchema: RouteSchema = {
-	tags: TAGS,
+	tags: [Tags.Organizations],
 	summary: "Transfer organization ownership",
-	security: SECURITY,
+	security: [Security.bearerAuth],
 	body: TransferOrganizationSchema,
 	params: SlugSchema,
 	response: {

@@ -1,4 +1,4 @@
-import type { FastifyZodInstance } from "@/instance.types";
+import type { FastifyZodInstance } from "@/types/app-instance.type";
 
 import CreateOrganizationRouteSchema from "./schemas/org-create.schema";
 import GetOrganizationRouteSchema from "./schemas/org-get.schema";

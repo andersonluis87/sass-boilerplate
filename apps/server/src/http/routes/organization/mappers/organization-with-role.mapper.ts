@@ -8,9 +8,7 @@ interface OrganizationListItem {
 	members: Pick<Member, "role">[];
 }
 
-export function organizationWithRoleMapper(
-	organizations: OrganizationListItem[],
-) {
+export function organizationWithRole(organizations: OrganizationListItem[]) {
 	if (organizations.length === 0) {
 		return [];
 	}

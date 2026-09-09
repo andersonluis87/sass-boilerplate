@@ -1,12 +1,12 @@
 import { z } from "zod";
-import type { RouteSchema } from "@/instance.types";
 import { ManageOrganizationSchema } from "@/shared/schema/organization.schema";
-import { SECURITY, TAGS } from "./org.constant";
+import type { RouteSchema } from "@/types/route-schema.type";
+import { Security, Tags } from "@/types/route-schema.type";
 
 const CreateOrganizationRouteSchema: RouteSchema = {
-	tags: TAGS,
+	tags: [Tags.Organizations],
 	summary: "Create a new organization",
-	security: SECURITY,
+	security: [Security.bearerAuth],
 	body: ManageOrganizationSchema,
 	response: {
 		201: z.object({

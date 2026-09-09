@@ -1,4 +1,5 @@
 import prisma, { type Prisma } from "@sass-boiler-plate/db";
+import { userSelect } from "./types/member-with-user";
 
 interface GetMembershipData {
 	userId: string;
@@ -42,16 +43,9 @@ export class MemberRepository {
 
 	async listOrganizationMembers(where: Prisma.MemberWhereInput) {
 		return prisma.member.findMany({
-			select: {
-				id: true,
-				role: true,
+			include: {
 				user: {
-					select: {
-						id: true,
-						name: true,
-						email: true,
-						avatarUrl: true,
-					},
+					select: userSelect,
 				},
 			},
 			where,

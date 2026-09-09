@@ -7,7 +7,7 @@ import {
 import type { FastifyRequest } from "fastify";
 import { UnauthorizedError } from "@/shared/_errors/unauthorized-error";
 
-const currentOrgPin = (
+const injectOrganizationById = (
 	model: AccessibleModel,
 	organizationId: string,
 ): WhereInput<AccessibleModel> => {
@@ -34,7 +34,10 @@ export const constrainWhere = <TModel extends AccessibleModel>(
 
 	if (request.organization?.id) {
 		conditions.push(
-			currentOrgPin(model, request.organization.id) as WhereInput<TModel>,
+			injectOrganizationById(
+				model,
+				request.organization.id,
+			) as WhereInput<TModel>,
 		);
 	}
 

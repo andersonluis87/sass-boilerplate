@@ -1,13 +1,13 @@
 import { Role } from "@sass-boiler-plate/auth";
 import { z } from "zod";
-import type { RouteSchema } from "@/instance.types";
 import { OrganizationBaseSchema } from "@/shared/schema/organization.schema";
-import { SECURITY, TAGS } from "./org.constant";
+import type { RouteSchema } from "@/types/route-schema.type";
+import { Security, Tags } from "@/types/route-schema.type";
 
 const ListOrganizationRouteSchema: RouteSchema = {
-	tags: TAGS,
+	tags: [Tags.Organizations],
 	summary: "List organizations",
-	security: SECURITY,
+	security: [Security.bearerAuth],
 	description: "List organizations where the current user is a member",
 	response: {
 		200: z.object({

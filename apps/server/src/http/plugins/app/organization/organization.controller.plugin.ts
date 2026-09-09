@@ -10,10 +10,16 @@ declare module "fastify" {
 
 export default fp(
 	async (app: FastifyInstance) => {
-		app.decorate("organizationController", new OrganizationController(app));
+		app.decorate(
+			"organizationController",
+			new OrganizationController(
+				app.organizationRepository,
+				app.memberRepository,
+			),
+		);
 	},
 	{
 		name: "organization-controller",
-		dependencies: ["organization-repository"],
+		dependencies: ["organization-repository", "member-repository"],
 	},
 );

@@ -1,7 +1,6 @@
 import type { Prisma } from "@sass-boiler-plate/db";
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyReply, FastifyRequest } from "fastify";
 import { BadRequestError } from "@/shared/_errors/bad-request-error";
-import { NotFoundError } from "@/shared/_errors/not-found-error";
 import type {
 	CreateOrganization,
 	TransferOrganization,
@@ -13,31 +12,31 @@ import {
 	constrainWhere,
 } from "@/utils/accessible-where.util";
 import { createSlug } from "@/utils/create-slug.util";
-import { organizationWithRoleMapper } from "./mappers/organization-with-role.mapper";
+import type { MemberRepository } from "../member/member.repository";
+import { organizationWithRole } from "./mappers/organization-with-role.mapper";
 import type { OrganizationRepository } from "./organization.repository";
 
 export class OrganizationController {
-	private readonly repository: OrganizationRepository;
-
-	constructor(private readonly app: FastifyInstance) {
-		this.repository = app.organizationRepository;
-	}
+	constructor(
+		private readonly repository: OrganizationRepository,
+		private readonly memberRepository: MemberRepository,
+	) {}
 
 	async list(request: FastifyRequest) {
 		const organizations = await this.repository.list(request.currentUserId);
-		return { organizations: organizationWithRoleMapper(organizations) };
+		return { organizations: organizationWithRole(organizations) };
 	}
 
 	async get(request: FastifyRequest) {
 		return { organization: request.organization };
 	}
 
-	async getMembership(request: FastifyRequest) {
+	async getMembership({ membership }: FastifyRequest) {
 		return {
 			membership: {
-				id: request.membership?.id,
-				role: request.membership?.role,
-				organizationId: request.membership?.organizationId,
+				id: membership.id,
+				role: membership.role,
+				organizationId: membership.organizationId,
 			},
 		};
 	}
@@ -84,13 +83,9 @@ export class OrganizationController {
 		reply: FastifyReply,
 	) {
 		const { transferToUserId } = request.body;
-
 		const { organization } = request;
-		if (!organization) {
-			throw new NotFoundError("Organization not found");
-		}
 
-		const newOrganizationOwner = await this.app.memberRepository.findUnique({
+		const newOrganizationOwner = await this.memberRepository.findUnique({
 			organizationId_userId: {
 				organizationId: organization.id,
 				userId: transferToUserId,
@@ -103,8 +98,9 @@ export class OrganizationController {
 			);
 		}
 
+		const where = constrainWhere(request, "transfer_ownership", "Organization");
 		const transferred = await this.repository.transferOwnership(
-			constrainWhere(request, "transfer_ownership", "Organization"),
+			where,
 			organization.id,
 			transferToUserId,
 		);
@@ -122,35 +118,15 @@ export class OrganizationController {
 	) {
 		const { slug } = request.params;
 		const { name, domain, shouldAttachUsersByDomain } = request.body;
-		const organization = request.organization;
 
-		if (!organization) {
-			throw new NotFoundError("Organization not found");
-		}
+		await this.ensureOrganizationUnique(slug, domain);
 
-		if (domain) {
-			const organizationExistsByDomain = await this.repository.findFirst({
-				domain,
-				slug: {
-					not: slug,
-				},
-			});
-
-			if (organizationExistsByDomain) {
-				throw new BadRequestError(
-					"Organization with this domain already exists",
-				);
-			}
-		}
-
-		const updated = await this.repository.update(
-			constrainWhere(request, "update", "Organization"),
-			{
-				name,
-				domain,
-				shouldAttachUsersByDomain,
-			},
-		);
+		const where = constrainWhere(request, "update", "Organization");
+		const updated = await this.repository.update(where, {
+			name,
+			domain,
+			shouldAttachUsersByDomain,
+		});
 		assertWriteAllowed(updated.count);
 
 		return reply.status(204).send(null);

@@ -1,12 +1,12 @@
-import type { RouteSchema } from "@/instance.types";
 import { NullResponseSchema } from "@/shared/schema/response.schema";
 import { SlugSchema } from "@/shared/schema/slug.schema";
-import { SECURITY, TAGS } from "./org.constant";
+import type { RouteSchema } from "@/types/route-schema.type";
+import { Security, Tags } from "@/types/route-schema.type";
 
 const ShutdownOrganizationRouteSchema: RouteSchema = {
-	tags: TAGS,
+	tags: [Tags.Organizations],
 	summary: "Shutdown an organization",
-	security: SECURITY,
+	security: [Security.bearerAuth],
 	params: SlugSchema,
 	response: {
 		204: NullResponseSchema,
