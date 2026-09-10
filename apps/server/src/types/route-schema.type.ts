@@ -10,7 +10,7 @@ export const Tags = {
 type Tag = (typeof Tags)[keyof typeof Tags];
 
 export const Security = {
-	bearerAuth: { "Bearer Auth": [] },
+	bearerAuth: { bearerAuth: [] },
 } as const satisfies Record<string, Record<string, readonly string[]>>;
 type SecuritySchema = (typeof Security)[keyof typeof Security];
 

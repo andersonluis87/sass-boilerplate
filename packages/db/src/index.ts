@@ -5,12 +5,16 @@ import { env } from "@sass-boiler-plate/env/server";
 import { PrismaClient } from "../prisma/generated/client";
 
 export type {
+	Account,
+	AccountProvider,
 	Invite,
 	Member,
 	Organization,
 	Prisma,
 	Project,
 	Role,
+	Token,
+	TokenType,
 	User,
 } from "../prisma/generated/client";
 
